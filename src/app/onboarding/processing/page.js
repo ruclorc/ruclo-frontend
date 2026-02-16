@@ -120,19 +120,40 @@ export default function Processing() {
           ) : (
             <motion.div
               key="ready"
-              initial={{ opacity: 0, y: 40 }}
-              animate={{ opacity: 1, y: 0 }}
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
-              transition={{ duration: 1.2, ease: [0.16, 1, 0.3, 1] }}
+              transition={{ duration: 0.5 }}
             >
               <h1 
-                className="text-4xl sm:text-5xl font-normal text-black mb-8"
+                className="text-3xl sm:text-4xl font-normal text-black mb-8"
                 style={{ fontFamily: 'Helvetica Neue, Helvetica, Arial, sans-serif' }}
               >
-                Your experience is ready
+                {['Your', 'stylist', 'has', 'curated', 'some', 'clothes', 'for', 'you'].map((word, i) => (
+                  <motion.span
+                    key={i}
+                    initial={{ opacity: 0 }}
+                    animate={{ opacity: 1 }}
+                    transition={{ 
+                      duration: 0.4,
+                      delay: i * 0.15,
+                      ease: [0.16, 1, 0.3, 1]
+                    }}
+                    className="inline-block mr-2"
+                  >
+                    {word}
+                  </motion.span>
+                ))}
               </h1>
 
-              <button
+              <motion.button
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ 
+                  duration: 0.8,
+                  delay: 1.5,
+                  ease: [0.16, 1, 0.3, 1]
+                }}
                 onClick={() => router.push('/stylist')}
                 className="px-12 py-4 bg-black text-white text-xs uppercase transition-all duration-500 hover:bg-gray-900"
                 style={{ 
@@ -140,8 +161,8 @@ export default function Processing() {
                   borderRadius: '25px'
                 }}
               >
-                Enter
-              </button>
+                View
+              </motion.button>
             </motion.div>
           )}
         </AnimatePresence>
