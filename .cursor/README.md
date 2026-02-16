@@ -67,7 +67,7 @@ Borders: #E5E7EB (gray-200)
   className="px-12 py-4 bg-black text-white text-xs uppercase"
   style={{ 
     fontFamily: 'Helvetica Neue, Helvetica, Arial, sans-serif',
-    borderRadius: '6px'
+    borderRadius: '25px'
   }}
 >
   Button Text

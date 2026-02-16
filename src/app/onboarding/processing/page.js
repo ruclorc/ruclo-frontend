@@ -6,202 +6,145 @@ import { useRouter } from 'next/navigation'
 export default function Processing() {
   const router = useRouter()
   const [progress, setProgress] = useState(0)
-  const [messageIndex, setMessageIndex] = useState(0)
-
-  const messages = [
-    'Analyzing your body shape...',
-    'Measuring proportions...',
-    'Calculating fit ranges...',
-    'Styling your wardrobe...',
-    'Finding your perfect matches...'
-  ]
+  const [images, setImages] = useState([])
+  const [isComplete, setIsComplete] = useState(false)
 
   useEffect(() => {
-    // Simulate AI processing
+    // Fetch product images
+    fetch('/api/products')
+      .then(res => res.json())
+      .then(data => {
+        if (data.images && data.images.length > 0) {
+          setImages(data.images.slice(0, 8)) // Use 8 images for smooth trail
+        }
+      })
+      .catch(err => console.error('Failed to fetch images:', err))
+
+    // Progress animation
     const progressInterval = setInterval(() => {
       setProgress(prev => {
         if (prev >= 100) {
           clearInterval(progressInterval)
-          // Navigate to reveal after completion
           setTimeout(() => {
-            router.push('/onboarding/reveal')
-          }, 800)
+            setIsComplete(true)
+          }, 500)
           return 100
         }
-        return prev + 1
+        return prev + 2
       })
-    }, 400) // 40 seconds total (100 * 400ms)
+    }, 200) // 10 seconds total (faster for mimicking)
 
-    // Rotate messages every 8 seconds
-    const messageInterval = setInterval(() => {
-      setMessageIndex(prev => (prev + 1) % messages.length)
-    }, 8000)
-
-    return () => {
-      clearInterval(progressInterval)
-      clearInterval(messageInterval)
-    }
+    return () => clearInterval(progressInterval)
   }, [router])
 
+  // Path coordinates for images to follow (diamond shape)
+  const pathPoints = [
+    { x: 0, y: -250 },     // Top
+    { x: 350, y: 0 },      // Right
+    { x: 0, y: 250 },      // Bottom
+    { x: -350, y: 0 },     // Left
+    { x: 0, y: -250 }      // Back to top
+  ]
+
   return (
-    <div className="min-h-screen bg-black flex items-center justify-center px-6 overflow-hidden relative">
+    <div className="min-h-screen bg-white flex items-center justify-center px-6 overflow-hidden relative">
       
-      {/* Animated background gradient */}
-      <motion.div
-        className="absolute inset-0"
-        animate={{
-          background: [
-            'radial-gradient(circle at 20% 50%, rgba(255,255,255,0.03) 0%, rgba(0,0,0,1) 50%)',
-            'radial-gradient(circle at 80% 50%, rgba(255,255,255,0.03) 0%, rgba(0,0,0,1) 50%)',
-            'radial-gradient(circle at 50% 80%, rgba(255,255,255,0.03) 0%, rgba(0,0,0,1) 50%)',
-            'radial-gradient(circle at 20% 50%, rgba(255,255,255,0.03) 0%, rgba(0,0,0,1) 50%)'
-          ]
-        }}
-        transition={{
-          duration: 20,
-          repeat: Infinity,
-          ease: 'linear'
-        }}
-      />
-
-      {/* Floating particles */}
-      {[...Array(12)].map((_, i) => (
-        <motion.div
-          key={i}
-          className="absolute w-1 h-1 bg-white rounded-full"
-          style={{
-            left: `${Math.random() * 100}%`,
-            top: `${Math.random() * 100}%`,
-          }}
-          animate={{
-            y: [0, -30, 0],
-            opacity: [0.2, 0.5, 0.2],
-            scale: [1, 1.5, 1]
-          }}
-          transition={{
-            duration: 3 + Math.random() * 2,
-            repeat: Infinity,
-            delay: Math.random() * 2,
-            ease: 'easeInOut'
-          }}
-        />
-      ))}
-
-      {/* Main content */}
-      <div className="relative z-10 w-full max-w-lg text-center">
-        
-        {/* Animated Circle Loader */}
-        <div className="mb-12 flex justify-center">
-          <div className="relative w-32 h-32">
-            {/* Outer rotating circle */}
-            <motion.div
-              className="absolute inset-0 border-2 border-gray-800 rounded-full"
-              animate={{ rotate: 360 }}
-              transition={{
-                duration: 3,
-                repeat: Infinity,
-                ease: 'linear'
-              }}
-            >
-              <motion.div
-                className="absolute top-0 left-1/2 w-2 h-2 bg-white rounded-full -ml-1 -mt-1"
-                animate={{
-                  scale: [1, 1.5, 1],
-                  opacity: [1, 0.5, 1]
-                }}
-                transition={{
-                  duration: 1.5,
-                  repeat: Infinity,
-                  ease: 'easeInOut'
-                }}
-              />
-            </motion.div>
-
-            {/* Inner pulsing circle */}
-            <motion.div
-              className="absolute inset-4 border-2 border-gray-700 rounded-full"
-              animate={{
-                scale: [1, 1.1, 1],
-                opacity: [0.5, 0.8, 0.5]
-              }}
-              transition={{
-                duration: 2,
-                repeat: Infinity,
-                ease: 'easeInOut'
-              }}
-            />
-
-            {/* Center dot */}
-            <motion.div
-              className="absolute inset-0 flex items-center justify-center"
-            >
-              <motion.div
-                className="w-3 h-3 bg-white rounded-full"
-                animate={{
-                  scale: [1, 1.5, 1],
-                  opacity: [0.8, 1, 0.8]
-                }}
-                transition={{
-                  duration: 1.5,
-                  repeat: Infinity,
-                  ease: 'easeInOut'
-                }}
-              />
-            </motion.div>
-          </div>
-        </div>
-
-        {/* Rotating Messages */}
-        <div className="h-16 mb-8">
-          <AnimatePresence mode="wait">
-            <motion.p
-              key={messageIndex}
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, y: -20 }}
-              transition={{ duration: 0.5 }}
-              className="text-xl sm:text-2xl text-white font-light"
-              style={{ fontFamily: 'Helvetica Neue, Helvetica, Arial, sans-serif' }}
-            >
-              {messages[messageIndex]}
-            </motion.p>
-          </AnimatePresence>
-        </div>
-
-        {/* Progress Bar */}
-        <div className="relative">
-          <div className="h-1 bg-gray-800 rounded-full overflow-hidden">
-            <motion.div
-              className="h-full bg-white"
-              initial={{ width: '0%' }}
-              animate={{ width: `${progress}%` }}
-              transition={{ duration: 0.3, ease: 'easeOut' }}
-            />
-          </div>
+      {/* Animated Image Trail */}
+      <AnimatePresence>
+        {!isComplete && images.map((imageUrl, i) => {
+          const delay = (i / images.length) * 15 // Spread images along path
           
-          {/* Progress Percentage */}
-          <motion.p
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            transition={{ delay: 0.5 }}
-            className="mt-4 text-sm text-gray-500 font-light"
-            style={{ fontFamily: 'Helvetica Neue, Helvetica, Arial, sans-serif' }}
-          >
-            {progress}%
-          </motion.p>
-        </div>
+          return (
+            <motion.div
+              key={i}
+              className="absolute"
+              style={{
+                left: '50%',
+                top: '50%',
+                marginLeft: '-40px',
+                marginTop: '-40px'
+              }}
+              animate={{
+                x: pathPoints.map(p => p.x),
+                y: pathPoints.map(p => p.y)
+              }}
+              transition={{
+                duration: 15,
+                repeat: Infinity,
+                ease: 'linear',
+                delay: delay
+              }}
+            >
+              <motion.img 
+                src={imageUrl} 
+                alt="Product"
+                className="w-20 h-20 sm:w-24 sm:h-24 object-cover"
+                style={{ 
+                  borderRadius: '4px',
+                  opacity: 0.5
+                }}
+              />
+            </motion.div>
+          )
+        })}
+      </AnimatePresence>
 
-        {/* Subtle hint text */}
-        <motion.p
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          transition={{ delay: 5 }}
-          className="mt-12 text-xs text-gray-600"
-          style={{ fontFamily: 'Helvetica Neue, Helvetica, Arial, sans-serif' }}
-        >
-          This will only take a moment...
-        </motion.p>
+      {/* Center Content */}
+      <div className="relative z-10 text-center">
+        <AnimatePresence mode="wait">
+          {!isComplete ? (
+            <motion.div
+              key="analyzing"
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              transition={{ duration: 0.5 }}
+            >
+              <p
+                className="text-sm sm:text-base text-gray-800 font-light mb-4"
+                style={{ fontFamily: 'Helvetica Neue, Helvetica, Arial, sans-serif' }}
+              >
+                Analyzing your style...
+              </p>
 
+              {/* Progress Bar */}
+              <div className="w-48 h-px bg-gray-200 mx-auto">
+                <motion.div
+                  className="h-full bg-black"
+                  initial={{ width: '0%' }}
+                  animate={{ width: `${progress}%` }}
+                  transition={{ duration: 0.3, ease: 'easeOut' }}
+                />
+              </div>
+            </motion.div>
+          ) : (
+            <motion.div
+              key="ready"
+              initial={{ opacity: 0, y: 40 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0 }}
+              transition={{ duration: 1.2, ease: [0.16, 1, 0.3, 1] }}
+            >
+              <h1 
+                className="text-4xl sm:text-5xl font-normal text-black mb-8"
+                style={{ fontFamily: 'Helvetica Neue, Helvetica, Arial, sans-serif' }}
+              >
+                Your experience is ready
+              </h1>
+
+              <button
+                onClick={() => router.push('/stylist')}
+                className="px-12 py-4 bg-black text-white text-xs uppercase transition-all duration-500 hover:bg-gray-900"
+                style={{ 
+                  fontFamily: 'Helvetica Neue, Helvetica, Arial, sans-serif',
+                  borderRadius: '25px'
+                }}
+              >
+                Enter
+              </button>
+            </motion.div>
+          )}
+        </AnimatePresence>
       </div>
     </div>
   )

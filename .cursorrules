@@ -26,7 +26,7 @@ Building RUCLO - India's first fit-first fashion platform. Launch: June 6, 2026 
 - Borders: gray-200 (#E5E7EB), hover → black
 
 ### Buttons
-- Border radius: 6px (subtle, not fully rounded)
+- Border radius: 25px (rounded, not fully rounded pill)
 - Padding: px-12 py-4
 - Font: text-xs uppercase
 - Transition: duration-500 (slow, premium)

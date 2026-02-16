@@ -86,10 +86,10 @@ Border Hover: #000000 (black)
   className="px-12 py-4 bg-black text-white text-xs uppercase transition-all duration-500 hover:bg-gray-900"
   style={{ 
     fontFamily: 'Helvetica Neue, Helvetica, Arial, sans-serif',
-    borderRadius: '6px'
+    borderRadius: '25px'
   }}
 >
-  Begin
+  Button Text
 </button>
 ```
 
@@ -98,7 +98,7 @@ Border Hover: #000000 (black)
 ## Borders & Containers
 
 ### Rules
-- **Minimal rounded corners** - 6px max for buttons, 2-4px for boxes
+- **Rounded corners** - 25px for buttons, 6px for boxes/cards
 - **Thin borders** - 1px, never heavy
 - **Border colors:**
   - Default: `border-gray-200` (#E5E7EB)
