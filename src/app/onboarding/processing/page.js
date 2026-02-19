@@ -15,7 +15,13 @@ export default function Processing() {
       .then(res => res.json())
       .then(data => {
         if (data.images && data.images.length > 0) {
-          setImages(data.images.slice(0, 8)) // Use 8 images for smooth trail
+          // Multiply images to create full caterpillar effect (for demo purposes)
+          const targetCount = 50
+          const repeatedImages = []
+          while (repeatedImages.length < targetCount) {
+            repeatedImages.push(...data.images)
+          }
+          setImages(repeatedImages.slice(0, targetCount))
         }
       })
       .catch(err => console.error('Failed to fetch images:', err))
