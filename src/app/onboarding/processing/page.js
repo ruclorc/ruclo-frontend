@@ -160,7 +160,7 @@ export default function Processing() {
                   delay: 1.5,
                   ease: [0.16, 1, 0.3, 1]
                 }}
-                onClick={() => router.push('/stylist')}
+                onClick={() => router.push('/onboarding/signup')}
                 className="px-12 py-4 bg-black text-white text-xs uppercase transition-all duration-500 hover:bg-gray-900"
                 style={{ 
                   fontFamily: 'Helvetica Neue, Helvetica, Arial, sans-serif',

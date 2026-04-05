@@ -1,10 +1,12 @@
 'use client'
 import { useState, useEffect } from 'react'
+import { useRouter } from 'next/navigation'
 import { motion, AnimatePresence } from 'framer-motion'
 import Navigation from '@/components/Navigation'
 import Footer from '@/components/Footer'
 
 export default function Stylist() {
+  const router = useRouter()
   const [products, setProducts] = useState([])
   const [currentIndex, setCurrentIndex] = useState(0)
   const [direction, setDirection] = useState(0)
@@ -38,6 +40,9 @@ export default function Stylist() {
   }, [])
 
   const currentProduct = products[currentIndex]
+  
+  // Check if current product matches user
+  const isMatch = currentProduct ? checkFitMatch(currentProduct) : false
 
   const paginate = (newDirection) => {
     setDirection(newDirection)
@@ -59,9 +64,18 @@ export default function Stylist() {
     }
   }
 
-  const handleAddToBag = () => {
-    console.log('Add to bag:', currentProduct)
-    // TODO: Shopify cart integration
+  const handleAddToBag = async () => {
+    // For now, redirect to Shopify product page to add to cart
+    // TODO: Get actual product variant ID from Shopify
+    const shopifyDomain = process.env.NEXT_PUBLIC_SHOPIFY_STORE_DOMAIN || 'ruclo-4262.myshopify.com'
+    window.location.href = `https://${shopifyDomain}/cart`
+    
+    // Future: Use cart API
+    // const response = await fetch('/api/add-to-cart', {
+    //   method: 'POST',
+    //   headers: { 'Content-Type': 'application/json' },
+    //   body: JSON.stringify({ variantId: currentProduct.variantId, quantity: 1 })
+    // })
   }
 
   const handleTryOn = () => {
@@ -127,8 +141,8 @@ export default function Stylist() {
         {/* Product Image */}
         <div className="relative">
           
-          {/* Badge */}
-          {currentProduct.styledForYou && (
+      {/* Badge */}
+      {hasOnboarded && isMatch && (
             <motion.div
               initial={{ opacity: 0, y: -10 }}
               animate={{ opacity: 1, y: 0 }}
@@ -187,22 +201,44 @@ export default function Stylist() {
             {currentProduct.caption}
           </motion.p>
 
-          {/* Action Buttons */}
-          <div className="flex gap-2 sm:gap-3 justify-center">
-            <button
-              onClick={() => setShowModal(true)}
-              className="px-6 sm:px-10 py-3 sm:py-4 bg-white border border-gray-200 text-black text-xs sm:text-sm uppercase transition-all duration-500 hover:border-black"
+          {/* Unlock Personalization Button (if not onboarded) */}
+          {!hasOnboarded && (
+            <motion.button
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.5 }}
+              onClick={() => router.push('/onboarding')}
+              className="w-full mb-4 px-8 py-3 bg-blue-500 text-white text-xs uppercase transition-all duration-500 hover:bg-blue-600"
               style={{ 
                 fontFamily: 'Helvetica Neue, Helvetica, Arial, sans-serif',
-                borderRadius: '25px'
+                borderRadius: '25px',
+                backgroundColor: '#007AFF'
               }}
             >
-              Why this fits
-            </button>
+              Unlock Personalization
+            </motion.button>
+          )}
+
+          {/* Action Buttons */}
+          <div className="flex gap-2 sm:gap-3 justify-center">
+            {hasOnboarded && isMatch && (
+              <button
+                onClick={() => setShowModal(true)}
+                className="px-6 sm:px-10 py-3 sm:py-4 bg-white border border-gray-200 text-black text-xs sm:text-sm uppercase transition-all duration-500 hover:border-black"
+                style={{ 
+                  fontFamily: 'Helvetica Neue, Helvetica, Arial, sans-serif',
+                  borderRadius: '25px'
+                }}
+              >
+                Why this fits
+              </button>
+            )}
             
             <button
               onClick={handleAddToBag}
-              className="px-6 sm:px-10 py-3 sm:py-4 bg-black text-white text-xs sm:text-sm uppercase transition-all duration-500 hover:bg-gray-900"
+              className={`px-6 sm:px-10 py-3 sm:py-4 bg-black text-white text-xs sm:text-sm uppercase transition-all duration-500 hover:bg-gray-900 ${
+                !hasOnboarded || !isMatch ? 'w-full' : ''
+              }`}
               style={{ 
                 fontFamily: 'Helvetica Neue, Helvetica, Arial, sans-serif',
                 borderRadius: '25px'
