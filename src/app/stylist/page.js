@@ -12,14 +12,61 @@ export default function Stylist() {
   const [direction, setDirection] = useState(0)
   const [showModal, setShowModal] = useState(false)
   const [showTryOn, setShowTryOn] = useState(false)
+  const [showSignInDialog, setShowSignInDialog] = useState(false)
+  const [hasOnboarded, setHasOnboarded] = useState(false)
+  const [customerId, setCustomerId] = useState(null)
+  const [userMeasurements, setUserMeasurements] = useState(null)
 
   useEffect(() => {
-    // Fetch products
-    fetch('/api/products')
-      .then(res => res.json())
-      .then(data => {
+    async function init() {
+      // Check auth via JWT cookie
+      try {
+        const authRes = await fetch('/api/auth/me')
+        const authData = await authRes.json()
+
+        if (authData.authenticated) {
+          setCustomerId(authData.customerId)
+
+          const measRes = await fetch(
+            `/api/get-measurements?customerId=gid://shopify/Customer/${authData.customerId}`
+          )
+          const measData = await measRes.json()
+
+          if (measData.hasOnboarded) {
+            setHasOnboarded(true)
+            setUserMeasurements(measData.measurements)
+          } else {
+            // Sync: if localStorage has measurements but Shopify doesn't, push them up
+            const localMeasurements = localStorage.getItem('userMeasurements')
+            if (localMeasurements) {
+              setHasOnboarded(true)
+              setUserMeasurements(JSON.parse(localMeasurements))
+              fetch('/api/save-measurements', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                  customerId: `gid://shopify/Customer/${authData.customerId}`,
+                  measurements: JSON.parse(localMeasurements),
+                }),
+              }).catch(err => console.error('[stylist] Sync failed:', err))
+            }
+          }
+        }
+      } catch (err) {
+        console.error('[stylist] Auth check failed:', err)
+      }
+
+      // Fallback: check localStorage for users who onboarded but haven't signed up yet
+      if (!hasOnboarded) {
+        const completed = localStorage.getItem('hasCompletedOnboarding')
+        if (completed) setHasOnboarded(true)
+      }
+
+      // Fetch products
+      try {
+        const res = await fetch('/api/products')
+        const data = await res.json()
         if (data.images && data.images.length > 0) {
-          // Create mock product data
           const mockProducts = data.images.map((img, i) => ({
             id: i,
             image: img,
@@ -27,7 +74,7 @@ export default function Stylist() {
             brand: 'Sample Brand',
             price: '₹4,999',
             caption: 'A perfectly tailored piece for the modern wardrobe',
-            styledForYou: i % 2 === 0, // Mock: every other product is a "match"
+            styledForYou: i % 2 === 0,
             fitReason: [
               'Relaxed fit for your frame',
               'Length hits at hip (balanced)',
@@ -36,12 +83,20 @@ export default function Stylist() {
           }))
           setProducts(mockProducts)
         }
-      })
+      } catch (err) {
+        console.error('[stylist] Failed to fetch products:', err)
+      }
+    }
+
+    init()
   }, [])
 
+  const checkFitMatch = (product) => {
+    if (!hasOnboarded) return false
+    return product.styledForYou
+  }
+
   const currentProduct = products[currentIndex]
-  
-  // Check if current product matches user
   const isMatch = currentProduct ? checkFitMatch(currentProduct) : false
 
   const paginate = (newDirection) => {
@@ -207,8 +262,8 @@ export default function Stylist() {
               initial={{ opacity: 0, y: 10 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.5 }}
-              onClick={() => router.push('/onboarding')}
-              className="w-full mb-4 px-8 py-3 bg-blue-500 text-white text-xs uppercase transition-all duration-500 hover:bg-blue-600"
+              onClick={() => customerId ? router.push('/onboarding/upload') : setShowSignInDialog(true)}
+              className="w-full mb-4 px-8 py-3 text-white text-xs uppercase transition-all duration-500"
               style={{ 
                 fontFamily: 'Helvetica Neue, Helvetica, Arial, sans-serif',
                 borderRadius: '25px',
@@ -324,6 +379,64 @@ export default function Stylist() {
                 </button>
 
               </div>
+            </motion.div>
+          </>
+        )}
+      </AnimatePresence>
+
+      {/* Sign In Dialog */}
+      <AnimatePresence>
+        {showSignInDialog && (
+          <>
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              transition={{ duration: 0.3 }}
+              className="fixed inset-0 bg-black bg-opacity-40 z-40"
+              onClick={() => setShowSignInDialog(false)}
+            />
+
+            <motion.div
+              initial={{ opacity: 0, scale: 0.95 }}
+              animate={{ opacity: 1, scale: 1 }}
+              exit={{ opacity: 0, scale: 0.95 }}
+              transition={{ duration: 0.4, ease: [0.16, 1, 0.3, 1] }}
+              className="fixed top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 bg-white z-50 px-8 py-10 w-[90%] max-w-sm"
+              style={{ borderRadius: '16px' }}
+            >
+              <h2
+                className="text-xl font-normal text-black mb-3 text-center"
+                style={{ fontFamily: 'Helvetica Neue, Helvetica, Arial, sans-serif' }}
+              >
+                Personalize your experience
+              </h2>
+
+              <p
+                className="text-sm text-gray-800 font-light mb-8 text-center"
+                style={{ fontFamily: 'Helvetica Neue, Helvetica, Arial, sans-serif' }}
+              >
+                Sign in to RUCLO to unlock your AI stylist and get fits curated for your body
+              </p>
+
+              <a
+                href={`https://${process.env.NEXT_PUBLIC_SHOPIFY_STORE_DOMAIN || 'ruclo-4262.myshopify.com'}/account/login`}
+                className="block w-full py-3 bg-black text-white text-xs uppercase text-center transition-all duration-500 hover:bg-gray-900 mb-3"
+                style={{
+                  fontFamily: 'Helvetica Neue, Helvetica, Arial, sans-serif',
+                  borderRadius: '25px',
+                }}
+              >
+                Sign in
+              </a>
+
+              <button
+                onClick={() => setShowSignInDialog(false)}
+                className="w-full py-3 text-xs uppercase text-gray-600 hover:text-black transition-colors duration-300"
+                style={{ fontFamily: 'Helvetica Neue, Helvetica, Arial, sans-serif' }}
+              >
+                Maybe later
+              </button>
             </motion.div>
           </>
         )}

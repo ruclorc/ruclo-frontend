@@ -9,36 +9,46 @@ export default function Complete() {
   useEffect(() => {
     const saveMeasurements = async () => {
       try {
-        // Get data from localStorage
         const measurements = localStorage.getItem('userMeasurements')
-        const photos = localStorage.getItem('userPhotos')
-        
+
         if (!measurements) {
           router.push('/stylist')
           return
         }
 
-        // Get customer ID from Shopify session (TODO: implement proper session check)
-        // For now, save to localStorage as fallback
         const measurementsData = JSON.parse(measurements)
-        
-        // TODO: Call API to save to Shopify customer metafields
-        // const response = await fetch('/api/save-measurements', {
-        //   method: 'POST',
-        //   headers: { 'Content-Type': 'application/json' },
-        //   body: JSON.stringify({ measurements: measurementsData })
-        // })
+
+        // Check if user is authenticated
+        const authRes = await fetch('/api/auth/me')
+        const authData = await authRes.json()
+
+        if (authData.authenticated) {
+          const saveRes = await fetch('/api/save-measurements', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              customerId: `gid://shopify/Customer/${authData.customerId}`,
+              measurements: measurementsData,
+            }),
+          })
+
+          const saveData = await saveRes.json()
+          if (!saveData.success) {
+            console.error('[complete] Failed to save:', saveData.error)
+          }
+        }
 
         setStatus('complete')
-        
-        // Redirect to Stylist after brief moment
+
         setTimeout(() => {
           router.push('/stylist')
         }, 1000)
-        
       } catch (error) {
-        console.error('Error saving measurements:', error)
+        console.error('[complete] Error saving measurements:', error)
         setStatus('error')
+        setTimeout(() => {
+          router.push('/stylist')
+        }, 2000)
       }
     }
 
@@ -48,7 +58,7 @@ export default function Complete() {
   return (
     <div className="min-h-screen bg-white flex items-center justify-center px-6">
       <div className="text-center">
-        <p 
+        <p
           className="text-sm text-gray-800 font-light"
           style={{ fontFamily: 'Helvetica Neue, Helvetica, Arial, sans-serif' }}
         >
